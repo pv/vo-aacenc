@@ -25,7 +25,7 @@
 #include "wavreader.h"
 
 void usage(const char* name) {
-	fprintf(stderr, "%s [-r bitrate] in.wav out.aac\n", name);
+	fprintf(stderr, "%s [-v] [-r bitrate] [-p peakrate] in.wav out.aac\n", name);
 }
 
 int main(int argc, char *argv[]) {
@@ -43,10 +43,21 @@ int main(int argc, char *argv[]) {
 	VO_MEM_OPERATOR mem_operator = { 0 };
 	VO_CODEC_INIT_USERDATA user_data;
 	AACENC_PARAM params = { 0 };
-	while ((ch = getopt(argc, argv, "r:")) != -1) {
+	AACENC_PEAKRATE peakrate = { 0 };
+	int minFrame = 0, maxFrame = 0;
+	size_t nFrame = 0, totSize = 0;
+	int verbose = 0;
+
+	while ((ch = getopt(argc, argv, "r:p:v")) != -1) {
 		switch (ch) {
 		case 'r':
 			bitrate = atoi(optarg);
+			break;
+		case 'p':
+			peakrate.peakRate = atoi(optarg);
+			break;
+		case 'v':
+			verbose++;
 			break;
 		case '?':
 		default:
@@ -102,6 +113,13 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if (peakrate.peakRate) {
+		if (codec_api.SetParam(handle, VO_PID_AAC_PEAKRATE, &peakrate) != VO_ERR_NONE) {
+			fprintf(stderr, "Unable to set encoding peakrate\n");
+			return 1;
+		}
+	}
+
 	out = fopen(outfile, "wb");
 	if (!out) {
 		perror(outfile);
@@ -132,6 +150,14 @@ int main(int argc, char *argv[]) {
 			return 1;
 		}
 		fwrite(outbuf, 1, output.Length, out);
+
+		if (minFrame == 0 || minFrame > output.Length)
+			minFrame = output.Length;
+		if (maxFrame == 0 || maxFrame < output.Length)
+			maxFrame = output.Length;
+
+		totSize += output.Length;
+		nFrame++;
 	}
 	free(inputBuf);
 	free(convertBuf);
@@ -139,6 +165,12 @@ int main(int argc, char *argv[]) {
 	codec_api.Uninit(handle);
 	wav_read_close(wav);
 
+	if (verbose) {
+		fprintf(stderr, "frame size min:%d max:%d avg:%d target:%d peak-target:%d\n",
+			minFrame, maxFrame, nFrame ? (int)(totSize / nFrame) : 0,
+			bitrate * 1024 / (8 * sampleRate),
+			peakrate.peakRate * 1024 / (8 * sampleRate));
+	}
 	return 0;
 }
 

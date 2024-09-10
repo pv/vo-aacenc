@@ -43,6 +43,7 @@ typedef  struct {
   Word16   nChannelsOut;          /* number of channels on output (1,2) */
   Word16   bandWidth;             /* targeted audio bandwidth in Hz */
   Word16   adtsUsed;			  /* whether write adts header */
+  Word32   peakRate;              /* peak bit rate in bits/sec */
 } AACENC_CONFIG;
 
 

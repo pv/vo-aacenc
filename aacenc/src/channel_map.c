@@ -88,7 +88,8 @@ Word16 InitElementBits(ELEMENT_BITS *elementBits,
                        ELEMENT_INFO elInfo,
                        Word32 bitrateTot,
                        Word16 averageBitsTot,
-                       Word16 staticBitsTot)
+                       Word16 staticBitsTot,
+                       Word16 maxBits)
 {
   Word16 error;
   error = 0;
@@ -100,6 +101,7 @@ Word16 InitElementBits(ELEMENT_BITS *elementBits,
       elementBits->maxBits = maxChannelBits;
 
       elementBits->maxBitResBits = maxChannelBits - averageBitsTot;
+      elementBits->maxBitResBits = min(elementBits->maxBitResBits, maxBits);
       elementBits->maxBitResBits = elementBits->maxBitResBits - (elementBits->maxBitResBits & 7);
       elementBits->bitResLevel = elementBits->maxBitResBits;
       elementBits->relativeBits  = 0x4000; /* 1.0f/2 */
@@ -111,6 +113,7 @@ Word16 InitElementBits(ELEMENT_BITS *elementBits,
       elementBits->maxBits     = maxChannelBits << 1;
 
       elementBits->maxBitResBits = (maxChannelBits << 1) - averageBitsTot;
+      elementBits->maxBitResBits = min(elementBits->maxBitResBits, maxBits);
       elementBits->maxBitResBits = elementBits->maxBitResBits - (elementBits->maxBitResBits & 7);
       elementBits->bitResLevel = elementBits->maxBitResBits;
       elementBits->relativeBits = 0x4000; /* 1.0f/2 */

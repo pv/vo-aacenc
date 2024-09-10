@@ -32,6 +32,7 @@ Word16 InitElementBits(ELEMENT_BITS *elementBits,
                        ELEMENT_INFO elInfo,
                        Word32 bitrateTot,
                        Word16 averageBitsTot,
-                       Word16 staticBitsTot);
+                       Word16 staticBitsTot,
+                       Word16 maxBits);
 
 #endif /* CHANNEL_MAP_H */

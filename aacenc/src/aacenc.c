@@ -147,6 +147,7 @@ VO_U32 VO_API voAACEncInit(VO_HANDLE * phCodec,VO_AUDIO_CODINGTYPE vType, VO_COD
 		 config.nChannelsOut = 2;
 		 config.sampleRate = 44100;
 		 config.bandWidth = 20000;
+		 config.peakRate = 0;
 
 		 AacEncOpen(hAacEnc, config);
 	}
@@ -318,6 +319,7 @@ VO_U32 VO_API voAACEncSetParam(VO_HANDLE hCodec, VO_S32 uParamID, VO_PTR pData)
 {
 	AACENC_CONFIG config;
 	AACENC_PARAM* pAAC_param;
+	AACENC_PEAKRATE* pAAC_peakrate;
 	VO_AUDIO_FORMAT *pWAV_Format;
 	AAC_ENCODER* hAacEnc = (AAC_ENCODER*)hCodec;
 	int ret, i, bitrate, tmp;
@@ -328,6 +330,16 @@ VO_U32 VO_API voAACEncSetParam(VO_HANDLE hCodec, VO_S32 uParamID, VO_PTR pData)
 
 	switch(uParamID)
 	{
+        case VO_PID_AAC_PEAKRATE:
+		if(pData == NULL)
+			return VO_ERR_INVALID_ARG;
+		pAAC_peakrate = (AACENC_PEAKRATE*)pData;
+		config = hAacEnc->config;
+		config.peakRate = pAAC_peakrate->peakRate;
+		ret = AacEncOpen(hAacEnc, config);
+		if(ret)
+			return VO_ERR_AUDIO_UNSFEATURE;
+		break;
 	case VO_PID_AAC_ENCPARAM:  /* init aac encoder parameter*/
 		AacInitDefaultConfig(&config);
 		if(pData == NULL)
@@ -338,6 +350,7 @@ VO_U32 VO_API voAACEncSetParam(VO_HANDLE hCodec, VO_S32 uParamID, VO_PTR pData)
 		config.nChannelsIn = pAAC_param->nChannels;
 		config.nChannelsOut = pAAC_param->nChannels;
 		config.sampleRate = pAAC_param->sampleRate;
+		config.peakRate = hAacEnc->config.peakRate;
 
 		/* check the channel */
 		if(config.nChannelsIn< 1  || config.nChannelsIn > MAX_CHANNELS  ||
@@ -403,6 +416,7 @@ VO_U32 VO_API voAACEncSetParam(VO_HANDLE hCodec, VO_S32 uParamID, VO_PTR pData)
 		config.nChannelsIn = pWAV_Format->Channels;
 		config.nChannelsOut = pWAV_Format->Channels;
 		config.sampleRate = pWAV_Format->SampleRate;
+		config.peakRate = hAacEnc->config.peakRate;
 
 		/* check the channel */
 		if(config.nChannelsIn< 1  || config.nChannelsIn > MAX_CHANNELS  ||

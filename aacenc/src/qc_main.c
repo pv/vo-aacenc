@@ -234,7 +234,8 @@ Word16 QCInit(QC_STATE *hQC,
                   *init->elInfo,
                   init->bitrate,
                   init->averageBits,
-                  hQC->globStatBits);
+                  hQC->globStatBits,
+                  init->maxBits);
 
   /* threshold parameter init */
   AdjThrInit(&hQC->adjThr,

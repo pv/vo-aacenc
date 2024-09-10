@@ -45,6 +45,7 @@ void AacInitDefaultConfig(AACENC_CONFIG *config)
   config->nChannelsOut    = 2;
   config->bitRate         = 128000;
   config->bandWidth       = 0;
+  config->peakRate        = 0;
 }
 
 /********************************************************************************
@@ -55,9 +56,10 @@ void AacInitDefaultConfig(AACENC_CONFIG *config)
 *
 **********************************************************************************/
 Word16  AacEncOpen(  AAC_ENCODER*      hAacEnc,        /* pointer to an encoder handle, initialized on return */
-                     const  AACENC_CONFIG     config   /* pre-initialized config struct */
+                     const AACENC_CONFIG     cfg	   /* pre-initialized config struct */
                      )
 {
+  AACENC_CONFIG config = cfg;
   Word32 error = 0;
   Word16 profile = 1;
 
@@ -65,6 +67,12 @@ Word16  AacEncOpen(  AAC_ENCODER*      hAacEnc,        /* pointer to an encoder 
 
   if (hAacEnc==0) {
     error=1;
+  }
+
+  /* Adjust bitrate to compensate for off-by-one byte */
+  if (config.peakRate > 0) {
+      int bits = 8 * config.sampleRate / FRAME_LEN_LONG;
+      config.bitRate = min(config.bitRate, max(config.peakRate, bits) - bits);
   }
 
   if (!error) {
@@ -106,7 +114,16 @@ Word16  AacEncOpen(  AAC_ENCODER*      hAacEnc,        /* pointer to an encoder 
     qcInit.elInfo = &hAacEnc->elInfo;
 
     qcInit.maxBits = (Word16) (MAXBITS_COEF*elInfo->nChannelsInEl);
+
+    if (config.peakRate > 0) {
+        int maxBits;
+        maxBits = ((max(config.peakRate, config.bitRate) - config.bitRate) * FRAME_LEN_LONG) / config.sampleRate;
+        maxBits = max(0, min(qcInit.maxBits, (Word16)maxBits));
+        qcInit.maxBits = (Word16) maxBits;
+    }
+
     qcInit.bitRes = qcInit.maxBits;
+
     qcInit.averageBits = (Word16) ((config.bitRate * FRAME_LEN_LONG) / config.sampleRate);
 
     qcInit.padding.paddingRest = config.sampleRate;
